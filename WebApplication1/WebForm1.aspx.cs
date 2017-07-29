@@ -7,56 +7,201 @@ using System.Web;
 using System.Web.Services;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using WebApplication1.App_Code;
 
 namespace WebApplication1
 {
     public partial class WebForm1 : System.Web.UI.Page
     {
-        private dynamic LOCATION_OBJ = null;
+        private dynamic LOCATION_CONFIG = null;
+        private List<Person> PERSONS;
+
         protected void Page_Load(object sender, EventArgs e)
         {
-            getData();
+            Session["LocationConfig"] = getData();
+
+            if (!Page.IsPostBack)
+            {
+                createHeaderInfo();
+            }
+            //getImage();
+            processStep1();
+
             createVisitTypeButtons();
             createImageButtons();
+        }
 
+        protected dynamic getData()
+        {
+            LOCATION_CONFIG = new JObject
+            {
+                { "name", "Fajardo Residence" },
+                { "title", "Fajardo Residence Login Sheet" },
+                { "address", "1051 West Inca St  Mesa, AZ  85201"},
+            };
 
+            JArray arr = new JArray();
+            arr.Add(new JObject
+            {
+                { "id", "family"},
+                { "text", "Family"},
+                { "requireRegistration", false}
+            });
+
+            arr.Add(new JObject
+            {
+                { "id", "healthServices"},
+                { "text", "Health Services"},
+                { "requireRegistration", true}
+            });
+
+            arr.Add(new JObject
+            {
+                { "id", "other"},
+                { "text", "Other"},
+                { "requireRegistration", false}
+            });
+
+            LOCATION_CONFIG["visitTypes"] = arr;
+
+            return LOCATION_CONFIG;
+
+        }
+
+        protected void createHeaderInfo()
+        {
+            litTitle.Text = LOCATION_CONFIG.title;
+            litAddress.Text = LOCATION_CONFIG.address;
+        }
+
+        #region step 1
+
+        private void processStep1()
+        {
             if (!this.IsPostBack)
             {
-                getImage();
+                multiView.ActiveViewIndex = 0;
             }
         }
 
-        private void getImage()
+        private void createVisitTypeButtons()
         {
-            if (Request.InputStream.Length > 0)
+            if (LOCATION_CONFIG != null)
             {
-                using (StreamReader reader = new StreamReader(Request.InputStream))
+                var divVisitTypes = FindControl("visitType");
+
+                if (divVisitTypes != null)
                 {
-                    string hexString = Server.UrlEncode(reader.ReadToEnd());
-                    string imageName = DateTime.Now.ToString("dd-MM-yy hh-mm-ss");
-                    string imagePath = string.Format("~/Captures/{0}.png", imageName);
-                    File.WriteAllBytes(Server.MapPath(imagePath), ConvertHexToBytes(hexString));
-                    Session["CapturedImage"] = ResolveUrl(imagePath);
+                    foreach (var json in LOCATION_CONFIG.visitTypes)
+                    {
+                        var button = new Button();
+                        button.ID = "btn" + Common.UppercaseFirst(json.id.Value);
+                        button.Text = json.text.Value;
+                        button.Click += new EventHandler(this.btnVisit_Click);
+                        divVisitTypes.Controls.Add(button);
+                    }
                 }
             }
         }
 
-        private static byte[] ConvertHexToBytes(string hex)
+        protected void btnVisit_Click(object sender, EventArgs e)
         {
-            byte[] bytes = new byte[hex.Length / 2];
-            for (int i = 0; i < hex.Length; i += 2)
-            {
-                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
-            }
-            return bytes;
+            multiView.ActiveViewIndex = 1;
+        }
+        #endregion
+
+        #region step 2
+        private void processStep2()
+        { }
+
+        protected void btnStep2Cancel_Click(object sender, EventArgs e)
+        {
+            multiView.ActiveViewIndex = 0;
         }
 
-        [WebMethod(EnableSession = true)]
-        public static string GetCapturedImage()
+        protected void btnStep2Continue_Click(object sender, EventArgs e)
         {
-            string url = HttpContext.Current.Session["CapturedImage"].ToString();
-            HttpContext.Current.Session["CapturedImage"] = null;
-            return url;
+            multiView.ActiveViewIndex = 2;
+            processStep3();
+        }
+        #endregion
+
+        #region step 3
+        private void processStep3()
+        {
+            createResidentData();
+            bindToPersonGrid();
+        }
+
+        private void createResidentData()
+        {
+            PERSONS = new List<Person>();
+
+            var p = new Person
+            {
+                Id = 1,
+                Picture = "~/images/residents/anton.jpg",
+                FirstName = "peter",
+                LastName = "fajardo"
+            };
+
+            PERSONS.Add(p);
+
+            p = new Person
+            {
+                Id = 2,
+                Picture = "~/images/residents/bea.jpg",
+                FirstName = "vilma",
+                LastName = "fajardo"
+            };
+
+            PERSONS.Add(p);
+
+            p = new Person
+            {
+                Id = 3,
+                Picture = "~/images/residents/lucas.jpg",
+                FirstName = "niko",
+                LastName = "fajardo"
+            };
+
+            PERSONS.Add(p);
+
+            p = new Person
+            {
+                Id = 4,
+                Picture = "~/images/residents/cloe.jpg",
+                FirstName = "niki",
+                LastName = "fajardo"
+            };
+
+            PERSONS.Add(p);
+
+            p = new Person
+            {
+                Id = 5,
+                Picture = "~/images/residents/kitty.jpg",
+                FirstName = "nika",
+                LastName = "fajardo"
+            };
+
+            PERSONS.Add(p);
+
+            p = new Person
+            {
+                Id = 6,
+                Picture = "~/images/residents/kiwi.jpg",
+                FirstName = "kiwi",
+                LastName = "fajardo"
+            };
+
+            PERSONS.Add(p);
+        }
+
+        private void bindToPersonGrid()
+        {
+            grpData.DataSource = PERSONS;
+            grpData.DataBind();
         }
 
         private void createImageButtons()
@@ -97,61 +242,27 @@ namespace WebApplication1
 
         }
 
-        protected void getData()
+        protected void btnStep3Cancel_Click(object sender, EventArgs e)
         {
-             LOCATION_OBJ = new JObject
-            {
-                { "name", "Fajardo Residence" },
-                { "address", "1051 West Inca St  Mesa, AZ  85201"},
-            };
-
-            JArray arr = new JArray();
-            arr.Add(new JObject
-            {
-                { "id", "family"},
-                { "text", "Family"},
-                { "requireRegistration", false}
-            });
-
-            arr.Add(new JObject
-            {
-                { "id", "healthServices"},
-                { "text", "Health Services"},
-                { "requireRegistration", true}
-            });
-
-            arr.Add(new JObject
-            {
-                { "id", "other"},
-                { "text", "Other"},
-                { "requireRegistration", false}
-            });
-
-            LOCATION_OBJ["visitTypes"] = arr;
-
+            multiView.ActiveViewIndex = 0;
         }
 
-        private void createVisitTypeButtons()
+        protected void btnStep3Continue_Click(object sender, EventArgs e)
         {
-            //< asp:Button ID = "btnFamily" Text = "Family" Font - Size = "XX-Large" runat = "server" OnClick = "btnVisit_Click" />
-            var divVisitTypes = FindControl("visitType");
+            multiView.ActiveViewIndex = 3;
+        }
+        #endregion
 
-            if (divVisitTypes != null)
-            {
-                foreach (var json in LOCATION_OBJ.visitTypes)
-                {
-                    var button = new Button();
-                    button.ID = "btn" + Common.UppercaseFirst(json.id.Value);
-                    button.Text = json.text.Value;
-                    button.Click += new EventHandler(this.btnVisit_Click);
-                    divVisitTypes.Controls.Add(button);
-                }
-            }
+        #region step 4
+        private void processStep4()
+        {
+           
         }
 
-        protected void btnVisit_Click(object sender, EventArgs e)
-        {
-            var x = string.Empty;
-        }
+        
+
+        #endregion
     }
+
+    
 }

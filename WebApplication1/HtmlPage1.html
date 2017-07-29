@@ -1,0 +1,50 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>jQuery UI Dialog - Animation</title>
+    <link rel="shortcut icon" href="">
+    <link rel="stylesheet" href="Content/themes/base/jquery-ui.min.css">
+    <!--<link rel="stylesheet" href="/resources/demos/style.css">-->
+    <script src="Scripts/jquery-1.12.4.min.js"></script>
+    <script src="Scripts/jquery-ui-1.12.1.min.js"></script>
+    <script>
+         $(document).ready(function () {
+             $(function () {
+                 $("#dialog").dialog({
+                     autoOpen: false,
+                     maxWidth: 1000,
+                     maxHeight: 1000,
+                     width: 1000,
+                     height: 1000,
+                     modal: true,
+                     show: {
+                         effect: "blind",
+                         duration: 1000
+                     },
+                     hide: {
+                         effect: "explode",
+                         duration: 1000
+                     }
+                 });
+
+                 $("#opener").on("click", function () {
+                     $("#dialog").dialog("open");
+                 });
+             });
+         });
+    </script>
+</head>
+<body>
+
+    <div id="dialog" title="Camera" style="width:100%; height:500px;" >
+        <p><h1>Smile</h1></p>
+        <iframe src="http://localhost:53876/webcam.aspx" style="width:100%;height:100%"></iframe>
+    </div>
+
+    <button id="opener">Open Dialog</button>
+
+
+</body>
+</html>
